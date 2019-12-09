@@ -16,11 +16,6 @@ func BuildRespStr(words []string) string{
 }
 
 func getKeyWordsLen(words []string) int {
-	count := 0
-	for _, value := range words {
-		if value != "" {
-			count++
-		}
-	}
+	var count = len(words)
 	return count
 }

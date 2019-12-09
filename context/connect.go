@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 func ConnectServer(context *RedisContext) {
@@ -26,10 +27,19 @@ func WriteToServer(command string, context *RedisContext) {
 }
 
 func ReadFromServer(context *RedisContext) string {
-	var res = ""
-	res, err := bufio.NewReader(context.Con).ReadString('\n')
-	if err != nil  {
-		return res
+	var line = ""
+	var err error
+	var reader = bufio.NewReader(context.Con)
+	for {
+		line, err = reader.ReadString('\n')
+		if len(line) == 0 || err != nil {
+			return ""
+		}
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			break
+		}
 	}
-	return res
+	fmt.Println(line)
+	return line
 }

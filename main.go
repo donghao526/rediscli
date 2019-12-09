@@ -13,12 +13,14 @@ import (
 func main()  {
 	ctx := context.GetRedisContext("127.0.0.1", "6379")
 	for true {
+		cmdLinePrompt(ctx)
 		var input = getInput()
 		var words = str.ParseUserCommand(input)
 		var res = str.BuildRespStr(words)
 		context.WriteToServer(res, ctx)
 		var response = context.ReadFromServer(ctx)
 		fmt.Println(response)
+		fmt.Println(str.ParseServerResponse(response))
 	}
 }
 
@@ -33,3 +35,6 @@ func getInput() string {
 	return words[0]
 }
 
+func cmdLinePrompt(ctx *context.RedisContext) {
+	fmt.Printf("%s:%s> ", ctx.Ip, ctx.Port)
+}

@@ -24,4 +24,3 @@ func getKeyWordsLen(words []string) int {
 	}
 	return count
 }
-

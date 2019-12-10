@@ -18,9 +18,8 @@ func main()  {
 		var words = str.ParseUserCommand(input)
 		var res = str.BuildRespStr(words)
 		context.WriteToServer(res, ctx)
-		var response = context.ReadFromServer(ctx)
+		var response = context.ReadReply(ctx)
 		fmt.Println(response)
-		fmt.Println(str.ParseServerResponse(response))
 	}
 }
 

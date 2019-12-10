@@ -1,36 +1,12 @@
-package context
+package rediscli
 
 import (
-	"bufio"
 	"fmt"
-	"net"
 	"strings"
 )
 
-type RedisContext struct {
-	Ip string
-	Port string
-	Con net.Conn
-	Br *bufio.Reader
-}
-
-func GetRedisContext(ip string, port string) *RedisContext {
-	var context = InitContext(ip, port)
-	ConnectServer(context)
-	context.Br  = bufio.NewReader(context.Con)
-	return context
-}
-
-func InitContext(ip string, port string) *RedisContext  {
-	var context RedisContext
-	context.Ip = ip
-	context.Port = port
-	context.Con = nil
-	return &context
-}
-
 func ReadLine(ctx *RedisContext) string {
-	res, err := ctx.Br.ReadString('\n')
+	res, err := ctx.reader.ReadString('\n')
 	if err != nil  {
 		return ""
 	}
@@ -85,11 +61,11 @@ func GetBulkString(ctx *RedisContext, line string) string {
 	}
 }
 
-func parseLen(line string) int{
+func parseLen(line string) int {
 	base := 0
 	for i := 0; i < len(line); i++ {
 		if line[i] >= '0' && line[i] <= '9' {
-			base = base * 10 + (int)(line[i] - '0')
+			base = base*10 + (int)(line[i]-'0')
 		} else {
 			break
 		}

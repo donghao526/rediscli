@@ -26,22 +26,15 @@ func ReadReply(context *RedisContext) (string, error) {
     var res = ""
     switch line[0] {
     case '+':
-        return ParseSimpleString(line), nil
+        return ParseSimpleString(line[1 : ]), nil
     case '-':
-        return ParseError(line), nil
+        return ParseError(line[1 : ]), nil
     case ':':
-        return ParseInteger(line), nil
+        return ParseInteger(line[1 : ]), nil
     case '$':
         return GetBulkString(context, line), nil
     }
     return res, nil
-}
-
-func ParseInteger(integer string) string {
-    var strArray = strings.Split(integer, "\r\n")
-    var strIntegerStringContent = strArray[0]
-    var strLen = len(strIntegerStringContent)
-    return strIntegerStringContent[1:strLen]
 }
 
 func GetBulkString(ctx *RedisContext, line string) string {

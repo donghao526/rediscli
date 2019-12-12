@@ -34,16 +34,21 @@ func buildRespString(arrKeyWords []string) string {
 
 // parse simple string
 func ParseSimpleString(simpleString string) string {
-    var strArray = strings.Split(simpleString, "\r\n")
-    var strSimpleStringContent = strArray[0]
-    var strLen = len(strSimpleStringContent)
-    return strSimpleStringContent[1:strLen]
+    strArray := strings.Split(simpleString, "\r\n")
+    strContent := strArray[0]
+    return strContent
 }
 
 // parse error
 func ParseError(error string) string {
-    var strArray = strings.Split(error, "\r\n")
-    var strErrorStringContent = strArray[0]
-    var strLen = len(strErrorStringContent)
-    return "(error)" + strErrorStringContent[1:strLen]
+    strArray := strings.Split(error, "\r\n")
+    strErrorContent := strArray[0]
+    return "(error)" + strErrorContent
+}
+
+// parse integer
+func ParseInteger(integer string) string {
+    strArray := strings.Split(integer, "\r\n")
+    strIntContent := strArray[0]
+    return strIntContent
 }

@@ -5,11 +5,20 @@ import (
     "strings"
 )
 
+// get the resp protocol string for the command
+func GetRespStrOfCmd(command string) string {
+    arrKeyWords := getKeyWordsOfCmd(command)
+    return buildRespString(arrKeyWords)
+}
+
+// get key words of the cmd
 func getKeyWordsOfCmd(command string) []string {
     var keywords = strings.Fields(command)
     return keywords
 }
 
+
+// build the resp protocol string for the command
 func buildRespString(arrKeyWords []string) string {
     var intCount = len(arrKeyWords)
     var strResp = ""
@@ -23,7 +32,4 @@ func buildRespString(arrKeyWords []string) string {
     return strResp
 }
 
-func GetRespStrOfCmd(command string) string {
-    arrKeyWords := getKeyWordsOfCmd(command)
-    return buildRespString(arrKeyWords)
-}
+

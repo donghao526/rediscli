@@ -24,7 +24,11 @@ func main() {
                     fmt.Println(err)
                     continue
                 } else {
-                    strReply := rediscli.ReadReply(ctx)
+                    strReply, err := rediscli.ReadReply(ctx)
+                    if err != nil {
+                        fmt.Println(err)
+                        continue
+                    }
                     rediscli.PrintReply(strReply)
                 }
             }

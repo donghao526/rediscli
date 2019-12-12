@@ -3,6 +3,7 @@ package rediscli
 import (
     "fmt"
     "strings"
+    "errors"
 )
 
 func ReadLine(ctx *RedisContext) string {
@@ -13,37 +14,30 @@ func ReadLine(ctx *RedisContext) string {
     return res
 }
 
-func ReadReply(context *RedisContext) string {
-    var line = ReadLine(context)
+func ReadReply(context *RedisContext) (string, error) {
+
+    // read line
+    line := ReadLine(context)
+    err := errors.New("the response invalid")
+    if !strings.Contains(line, "\r\n") {
+        return line, err
+    }
+
     var res = ""
     switch line[0] {
     case '+':
-        return GetSimpleString(line)
+        return ParseSimpleString(line), nil
     case '-':
-        return GetErrorString(line)
+        return ParseError(line), nil
     case ':':
-        return GetIntegerString(line)
+        return ParseInteger(line), nil
     case '$':
-        return GetBulkString(context, line)
+        return GetBulkString(context, line), nil
     }
-    return res
+    return res, nil
 }
 
-func GetSimpleString(simpleString string) string {
-    var strArray = strings.Split(simpleString, "\r\n")
-    var strSimpleStringContent = strArray[0]
-    var strLen = len(strSimpleStringContent)
-    return strSimpleStringContent[1:strLen]
-}
-
-func GetErrorString(error string) string {
-    var strArray = strings.Split(error, "\r\n")
-    var strErrorStringContent = strArray[0]
-    var strLen = len(strErrorStringContent)
-    return "(error)" + strErrorStringContent[1:strLen]
-}
-
-func GetIntegerString(integer string) string {
+func ParseInteger(integer string) string {
     var strArray = strings.Split(integer, "\r\n")
     var strIntegerStringContent = strArray[0]
     var strLen = len(strIntegerStringContent)

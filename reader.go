@@ -32,9 +32,14 @@ func ReadReply(context *RedisContext) (string, error) {
     case ':':
         return ParseInteger(line[1 : ]), nil
     case '$':
-        return GetBulkString(context, line), nil
+        return ProcessBulkString(context, line), nil
     }
     return res, nil
+}
+
+func ProcessBulkString(ctx *RedisContext, line string) string {
+    strBulk := ""
+    return strBulk;
 }
 
 func GetBulkString(ctx *RedisContext, line string) string {

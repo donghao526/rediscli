@@ -24,23 +24,23 @@ func ReadReply(context *RedisContext) (string, error) {
 		return line, err
 	}
 
-	var res = ""
-	switch line[0] {
-	    case '+':
-		    return ParseSimpleString(line[1:]), nil
-	    case '-':
-		    return ParseError(line[1:]), nil
-	    case ':':
-		    return ParseInteger(line[1:]), nil
-	    case '$':
-            res, errBulk := ProcessBulkString(context, line[1:])
-            if errBulk != nil {
-                return res, errBulk
-            } else {
-                return res, nil
-            }
-	}
-	return res, nil
+    if line[0] == '+' {
+        return ParseSimpleString(line[1:]), nil        
+    } else if line[0] == '-' {
+        return ParseError(line[1:]), nil
+    } else if line[0] == ':' {
+        return ParseInteger(line[1:]), nil
+    } else if line[0] == '$' {
+        res, errBulk := ProcessBulkString(context, line[1:])
+        if errBulk != nil {
+            return res, errBulk
+        } else {
+            return res, nil
+        }
+    } else if line[0] == '*' {
+        return "", nil
+    }
+	return "", nil
 }
 
 func ProcessBulkString(ctx *RedisContext, line string) (string, error) {

@@ -3,7 +3,8 @@ package rediscli
 import (
 	"errors"
 	"fmt"
-	"strings"
+    "strings"
+    "strconv"
 )
 
 func ReadLine(ctx *RedisContext) string {
@@ -25,21 +26,24 @@ func ReadReply(context *RedisContext) (string, error) {
 
 	var res = ""
 	switch line[0] {
-	case '+':
-		return ParseSimpleString(line[1:]), nil
-	case '-':
-		return ParseError(line[1:]), nil
-	case ':':
-		return ParseInteger(line[1:]), nil
-	case '$':
-		return ProcessBulkString(context, line[1:]), nil
+	    case '+':
+		    return ParseSimpleString(line[1:]), nil
+	    case '-':
+		    return ParseError(line[1:]), nil
+	    case ':':
+		    return ParseInteger(line[1:]), nil
+	    case '$':
+            res, errBulk := ProcessBulkString(context, line[1:])
+            if errBulk != nil {
+                return res, errBulk
+            } else {
+                return res, nil
+            }
 	}
 	return res, nil
 }
 
 func ProcessBulkString(ctx *RedisContext, line string) (string, error) {
-    strBulk := ""
-    err := errors.New("read failed")
 	intBulkLen := parseLen(line)
 	if intBulkLen > 0 {
 		var strNewLine = ReadLine(ctx)
@@ -53,35 +57,19 @@ func ProcessBulkString(ctx *RedisContext, line string) (string, error) {
 }
 
 func parseLen(line string) int {
-    intBase := 0
-    intStart := 0
-    bolPositive := true
-
-    if line[0] == '-' {
-        bolPositive = false
-        intStart = 1
-    }
-    
-	for i := intStart; i < len(line); i++ {
-		if line[i] >= '0' && line[i] <= '9' {
-			intBase = intBase*10 + (int)(line[i]-'0')
-		} else {
-			break
-		}
-	}
-    
-    if bolPositive == false {
-        return -1 * intBase
-    }
+    strArray := strings.Split(line, "\r\n")
+    intLen, _ := strconv.Atoi(strArray[0])
+    return intLen
 }
 
-func isValidPrefix(prefix char) bool {
+func isValidPrefix(prefix byte) bool {
 	switch prefix {
-        '-' :
-        '$' :
-        '*' :
-        '+' :
-        ':' : return true;
+        case '-' :
+        case '$' :
+        case '*' :
+        case '+' :
+        case ':' : return true;
         default: return false; 
-	}
+    }
+    return false
 }

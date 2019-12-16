@@ -46,6 +46,10 @@ func ReadReply(context *RedisContext) (string, error) {
 	return "", nil
 }
 
+func ProcessArray(ctx *RedisContext, line string) (string, error) {
+	return "", nil
+}
+
 /*
  * process the bulk string
  */

@@ -7,6 +7,39 @@ import (
 	"strings"
 )
 
+type redisReader struct {
+	err    int    /* Error flags, 0 when there is no error */
+	errstr string /* String representation of error when applicable */
+	buf    string /* Read buffer */
+	pos    int    /* Buffer cursor */
+	len    int    /* Buffer length */
+	maxbuf int    /* Max length of unused buffer */
+	ridx   int
+	rtask  [10]RedisContext
+}
+
+type redisReaderTask struct {
+}
+
+func processItem() int {
+	return REDIS_OK
+}
+
+func ReadBuffer(ctx *RedisContext) int {
+	var newbuf [1024 * 16]byte
+	var nread, _ = ctx.reader.Read(newbuf[:])
+
+	if nread > 0 {
+		ctx.len = nread
+		copy(ctx.buf[:], newbuf[:])
+		return REDIS_OK
+	} else if nread < 0 {
+		return REDIS_ERR
+	}
+
+	return REDIS_OK
+}
+
 /*
  * read line from server
  */

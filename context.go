@@ -11,6 +11,8 @@ type RedisContext struct {
 	conn    net.Conn
 	reader  *bufio.Reader
 	command string
+	buf     [1024 * 16]byte
+	len     int
 }
 
 /**
@@ -47,5 +49,6 @@ func initContext(ip string, port string) *RedisContext {
 	ctx.conn = nil
 	ctx.reader = nil
 	ctx.command = ""
+	ctx.buf = [16384]byte{0}
 	return &ctx
 }

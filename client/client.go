@@ -25,7 +25,7 @@ func main() {
 					fmt.Println(err)
 					continue
 				} else {
-					rediscli.ReadBuffer(ctx)
+					rediscli.ReadReply(ctx)
 					strReply, err := rediscli.ReadReply(ctx)
 					if err != nil {
 						fmt.Println(err)

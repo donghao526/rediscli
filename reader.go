@@ -12,11 +12,11 @@ type RedisReader struct {
 	errstr  string /* String representation of error when applicable */
 	pos     int    /* Buffer cursor */
 	maxbuf  int    /* Max length of unused buffer */
-	ridx    int
+	ridx    int    /* read index for the stack*/
 	buf     [1024 * 16]byte
 	len     int
 	cur_pos int
-	rstack  [10]RedisReaderTask
+	rstack  [10]RedisReaderTask /*read stack*/
 }
 
 type RedisReaderTask struct {

@@ -67,6 +67,14 @@ func processLineItem(r *RedisReader) int {
 	return REDIS_OK
 }
 
+func moveToNextTask(r *RedisReader) int {
+	if r.ridx == 0 {
+		r.ridx = -1
+		return REDIS_OK
+	}
+	return REDIS_OK
+}
+
 func readBytes(r *RedisReader, bytes int) []byte {
 	if r.len-r.cur_pos >= bytes {
 		t := r.buf[r.cur_pos : r.cur_pos+bytes]

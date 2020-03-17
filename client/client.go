@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/donghao526/rediscli"
 )
 
@@ -25,13 +24,14 @@ func main() {
 					fmt.Println(err)
 					continue
 				} else {
-					rediscli.ReadReply(ctx)
-					strReply, err := rediscli.ReadReply(ctx)
-					if err != nil {
-						fmt.Println(err)
-						continue
-					}
-					rediscli.PrintReply(strReply)
+					//rediscli.ReadReply(ctx)
+//					err := rediscli.ReadRedisReply(ctx)
+					rediscli.RedisGetReply(ctx)
+					//if err != rediscli.REDIS_OK {
+					//	fmt.Println(err)
+					//	continue
+					//}
+					//rediscli.PrintReply(strReply)
 				}
 			}
 		}

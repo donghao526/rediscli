@@ -44,10 +44,13 @@ func processItem(r *RedisReader) int {
 		switch p {
 		case '-':
 			cur.obj_type = TYPE_ERROR
+			break
 		case '+':
 			cur.obj_type = TYPE_STRING
+			break
 		case ':':
 			cur.obj_type = TYPE_INTEGER
+			break
 		default:
 		}
 	} else {
@@ -64,6 +67,21 @@ func processItem(r *RedisReader) int {
 }
 
 func processLineItem(r *RedisReader) int {
+	task := r.rstack[r.ridx]
+	strLine, err := readLine(r)
+	if err == REDIS_ERR {
+		return REDIS_ERR
+	}
+
+	if task.obj_type == TYPE_STRING {
+		obj := RedisObject{
+			obj_type:  TYPE_STRING,
+			int_value: 0,
+			str_value: strLine,
+		}
+		task.obj = &obj
+	}
+	moveToNextTask(r)
 	return REDIS_OK
 }
 
@@ -76,12 +94,36 @@ func moveToNextTask(r *RedisReader) int {
 }
 
 func readBytes(r *RedisReader, bytes int) []byte {
-	if r.len-r.cur_pos >= bytes {
+	if r.len - r.cur_pos >= bytes {
 		t := r.buf[r.cur_pos : r.cur_pos+bytes]
 		r.cur_pos += bytes
 		return t
 	}
 	return nil
+}
+
+func readLine(r *RedisReader) (string, int) {
+	newLinePos := seekNewLine(r)
+	if newLinePos == -1 {
+		return "", REDIS_ERR
+	}
+
+	strNewLine := string(r.buf[r.cur_pos : newLinePos])
+	r.cur_pos += newLinePos - r.cur_pos + 2
+	return strNewLine, REDIS_OK
+}
+
+func seekNewLine(r *RedisReader) int{
+	pos := r.cur_pos
+	for pos <= r.len - 1 {
+		if r.buf[pos] == '\r' {
+			if (pos < r.len - 1) && (r.buf[pos + 1] == '\n') {
+				return pos
+			}
+		}
+		pos++
+	}
+	return -1
 }
 
 func readChar(r *RedisReader) (byte, int) {
@@ -98,7 +140,7 @@ func RedisGetReply(ctx *RedisContext) int {
 		return REDIS_ERR
 	}
 
-	r := ctx.rReadr
+	r := ctx.replyReadr
 	r.ridx = 0
 	r.rstack[0].elements = -1
 	r.rstack[0].obj_type = -1
@@ -120,13 +162,14 @@ func RedisGetReply(ctx *RedisContext) int {
 func ReadRedisReply(ctx *RedisContext) int {
 	var newbuf [1024 * 16]byte
 	var nread, _ = ctx.reader.Read(newbuf[:])
+	fmt.Println(string(newbuf[:]))
 	var newReader RedisReader
 
 	if nread > 0 {
 		newReader.len = nread
 		newReader.cur_pos = 0
 		copy(newReader.buf[:], newbuf[:])
-		ctx.rReadr = &newReader
+		ctx.replyReadr = &newReader
 		return REDIS_OK
 	} else if nread < 0 {
 		return REDIS_ERR

@@ -11,7 +11,7 @@ type RedisContext struct {
 	conn    net.Conn
 	reader  *bufio.Reader
 	command string
-	replyReadr  *RedisReader
+	replyReader  *RedisReader
 }
 
 /**

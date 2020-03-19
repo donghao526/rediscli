@@ -1,7 +1,6 @@
 package rediscli
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -16,6 +15,7 @@ type RedisReader struct {
 	buf     [1024 * 16]byte
 	len     int
 	cur_pos int
+	reply   *RedisObject
 	rstack  [10]RedisReaderTask /*read stack*/
 }
 
@@ -38,7 +38,7 @@ type RedisObject struct {
  * @param RedisReader
  */
 func processItem(r *RedisReader) int {
-	cur := r.rstack[r.ridx]
+	cur := &r.rstack[r.ridx]
 	p, err := readChar(r)
 	if err == REDIS_OK {
 		switch p {
@@ -67,19 +67,24 @@ func processItem(r *RedisReader) int {
 }
 
 func processLineItem(r *RedisReader) int {
-	task := r.rstack[r.ridx]
+	task := &r.rstack[r.ridx]
 	strLine, err := readLine(r)
 	if err == REDIS_ERR {
 		return REDIS_ERR
 	}
 
+	var obj RedisObject
 	if task.obj_type == TYPE_STRING {
-		obj := RedisObject{
+		obj = RedisObject{
 			obj_type:  TYPE_STRING,
 			int_value: 0,
 			str_value: strLine,
 		}
 		task.obj = &obj
+	}
+
+	if r.ridx == 0 {
+		r.reply = &obj
 	}
 	moveToNextTask(r)
 	return REDIS_OK
@@ -135,12 +140,12 @@ func readChar(r *RedisReader) (byte, int) {
 	return '0', REDIS_ERR
 }
 
-func RedisGetReply(ctx *RedisContext) int {
+func RedisGetReply(ctx *RedisContext, reply *RedisObject) int {
 	if REDIS_OK != ReadRedisReply(ctx) {
 		return REDIS_ERR
 	}
 
-	r := ctx.replyReadr
+	r := ctx.replyReader
 	r.ridx = 0
 	r.rstack[0].elements = -1
 	r.rstack[0].obj_type = -1
@@ -153,6 +158,9 @@ func RedisGetReply(ctx *RedisContext) int {
 		}
 	}
 
+	if r.ridx == -1 {
+		reply = r.reply
+	}
 	return REDIS_OK
 }
 
@@ -169,7 +177,7 @@ func ReadRedisReply(ctx *RedisContext) int {
 		newReader.len = nread
 		newReader.cur_pos = 0
 		copy(newReader.buf[:], newbuf[:])
-		ctx.replyReadr = &newReader
+		ctx.replyReader = &newReader
 		return REDIS_OK
 	} else if nread < 0 {
 		return REDIS_ERR
@@ -187,38 +195,6 @@ func ReadLine(ctx *RedisContext) string {
 		return ""
 	}
 	return res
-}
-
-func ReadReply(context *RedisContext) (string, error) {
-
-	// read line
-	line := ReadLine(context)
-	err := errors.New("the response invalid")
-	if !strings.Contains(line, "\r\n") && !isValidPrefix(line[0]) {
-		return line, err
-	}
-
-	if line[0] == '+' {
-		return ParseSimpleString(line[1:]), nil
-	} else if line[0] == '-' {
-		return ParseError(line[1:]), nil
-	} else if line[0] == ':' {
-		return ParseInteger(line[1:]), nil
-	} else if line[0] == '$' {
-		res, errBulk := ProcessBulkString(context, line[1:])
-		if errBulk != nil {
-			return res, errBulk
-		} else {
-			return res, nil
-		}
-	} else if line[0] == '*' {
-		return "", nil
-	}
-	return "", nil
-}
-
-func ProcessArray(ctx *RedisContext, line string) (string, error) {
-	return "", nil
 }
 
 /*

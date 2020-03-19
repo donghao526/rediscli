@@ -31,23 +31,11 @@ func buildRespString(arrKeyWords []string) string {
 	return strResp
 }
 
-// parse simple string
-func ParseSimpleString(simpleString string) string {
-	strArray := strings.Split(simpleString, "\r\n")
-	strContent := strArray[0]
-	return strContent
-}
-
-// parse error
-func ParseError(error string) string {
-	strArray := strings.Split(error, "\r\n")
-	strErrorContent := strArray[0]
-	return "(error)" + strErrorContent
-}
-
-// parse integer
-func ParseInteger(integer string) string {
-	strArray := strings.Split(integer, "\r\n")
-	strIntContent := strArray[0]
-	return strIntContent
+func ParseReply(reply *RedisObject) string {
+	out := ""
+	switch reply.obj_type {
+		case TYPE_STRING:
+			out += reply.str_value
+	}
+	return out
 }

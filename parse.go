@@ -38,6 +38,8 @@ func ParseReply(reply *RedisObject) string {
 		fallthrough
 	case TYPE_ERROR:
 		out += reply.str_value
+	case TYPE_BULK:
+		out += "\"" + reply.str_value + "\""
 	}
 	return out
 }

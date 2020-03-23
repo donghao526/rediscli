@@ -48,6 +48,8 @@ func processItem(r *RedisReader) int {
 			cur.obj_type = TYPE_STRING
 		case ':':
 			cur.obj_type = TYPE_INTEGER
+		case '$':
+			cur.obj_type = TYPE_BULK
 		default:
 		}
 	} else {
@@ -60,6 +62,8 @@ func processItem(r *RedisReader) int {
 	case TYPE_ERROR:
 		fallthrough
 	case TYPE_STRING:
+		fallthrough
+	case TYPE_BULK:
 		processLineItem(r)
 	}
 	return REDIS_OK
@@ -67,16 +71,23 @@ func processItem(r *RedisReader) int {
 
 func processLineItem(r *RedisReader) int {
 	task := &r.rstack[r.ridx]
-	strLine, err := readLine(r)
-	if err == REDIS_ERR {
-		return REDIS_ERR
-	}
 
-	if task.obj_type == TYPE_STRING {
-		task.obj = CreateStringObject(strLine)
-	}
-	if task.obj_type == TYPE_ERROR {
-		task.obj = CreateErrorObject(strLine)
+	if task.obj_type == TYPE_STRING || task.obj_type == TYPE_ERROR {
+		strLine, err := readLine(r)
+		if err == REDIS_ERR {
+			return REDIS_ERR
+		}
+		if task.obj_type == TYPE_STRING {
+			task.obj = CreateStringObject(strLine)
+		}
+		if task.obj_type == TYPE_ERROR {
+			task.obj = CreateErrorObject(strLine)
+		}
+	} else if task.obj_type == TYPE_BULK {
+		strLen := readLen(r)
+		r.cur_pos  = r.cur_pos + 2
+		bulk := readBytes(r, strLen)
+		task.obj = CreateBulkObject(string(bulk[:]))
 	}
 
 	if r.ridx == 0 {
@@ -94,6 +105,7 @@ func moveToNextTask(r *RedisReader) int {
 	return REDIS_OK
 }
 
+// read bytes in redis read buf
 func readBytes(r *RedisReader, bytes int) []byte {
 	if r.len - r.cur_pos >= bytes {
 		t := r.buf[r.cur_pos : r.cur_pos+bytes]
@@ -101,6 +113,22 @@ func readBytes(r *RedisReader, bytes int) []byte {
 		return t
 	}
 	return nil
+}
+
+// read the len of the bulk or elements
+func readLen(r *RedisReader) int {
+	pos := r.cur_pos
+	res := 0
+	for pos < r.len {
+		if r.buf[pos] > 0x30 && r.buf[pos] <= 0x39 {
+			res = res * 10 + (int)(r.buf[pos] - 0x30)
+			pos = pos + 1
+		} else {
+			r.cur_pos += pos - r.cur_pos
+			return res
+		}
+	}
+	return pos
 }
 
 func readLine(r *RedisReader) (string, int) {

@@ -59,7 +59,9 @@ func processItem(r *RedisReader) int {
 
 	switch cur.obj_type {
 	case TYPE_INTEGER:
+		fallthrough
 	case TYPE_ERROR:
+		fallthrough
 	case TYPE_STRING:
 		processLineItem(r)
 	}

@@ -35,6 +35,8 @@ func ParseReply(reply *RedisObject) string {
 	out := ""
 	switch reply.obj_type {
 	case TYPE_STRING:
+		fallthrough
+	case TYPE_ERROR:
 		out += reply.str_value
 	}
 	return out

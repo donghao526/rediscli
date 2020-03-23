@@ -83,11 +83,16 @@ func processLineItem(r *RedisReader) int {
 		if task.obj_type == TYPE_ERROR {
 			task.obj = CreateErrorObject(strLine)
 		}
-	} else if task.obj_type == TYPE_BULK {
+	} else if task.obj_type == TYPE_BULK || task.obj_type == TYPE_INTEGER{
 		strLen := readLen(r)
-		r.cur_pos  = r.cur_pos + 2
-		bulk := readBytes(r, strLen)
-		task.obj = CreateBulkObject(string(bulk[:]))
+		if task.obj_type == TYPE_BULK {
+			r.cur_pos += 2
+			bulk := readBytes(r, strLen)
+			task.obj = CreateBulkObject(string(bulk[:]))
+		} else if task.obj_type == TYPE_INTEGER {
+			task.obj = CreateIntegerObject(strLen)
+		}
+		r.cur_pos += 2
 	}
 
 	if r.ridx == 0 {
@@ -131,6 +136,7 @@ func readLen(r *RedisReader) int {
 	return pos
 }
 
+// read line
 func readLine(r *RedisReader) (string, int) {
 	newLinePos := seekNewLine(r)
 	if newLinePos == -1 {
@@ -155,6 +161,7 @@ func seekNewLine(r *RedisReader) int{
 	return -1
 }
 
+// read a byte
 func readChar(r *RedisReader) (byte, int) {
 	if r.len >= r.cur_pos+1 {
 		t := r.buf[r.cur_pos]

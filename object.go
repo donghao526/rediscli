@@ -23,3 +23,10 @@ func CreateBulkObject(bulk string) *RedisObject{
 	strObj.obj_type = TYPE_BULK
 	return strObj
 }
+
+func CreateIntegerObject(value int) *RedisObject {
+	strObj := new(RedisObject)
+	strObj.int_value = value
+	strObj.obj_type = TYPE_INTEGER
+	return strObj
+}

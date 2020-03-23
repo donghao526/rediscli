@@ -39,7 +39,9 @@ func ParseReply(reply *RedisObject) string {
 	case TYPE_ERROR:
 		out += reply.str_value
 	case TYPE_BULK:
-		out += "\"" + reply.str_value + "\""
+		out += fmt.Sprintf("\"%s\"", reply.str_value)
+	case TYPE_INTEGER:
+		out += fmt.Sprintf("%d", reply.int_value)
 	}
 	return out
 }

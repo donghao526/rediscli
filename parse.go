@@ -34,8 +34,8 @@ func buildRespString(arrKeyWords []string) string {
 func ParseReply(reply *RedisObject) string {
 	out := ""
 	switch reply.obj_type {
-		case TYPE_STRING:
-			out += reply.str_value
+	case TYPE_STRING:
+		out += reply.str_value
 	}
 	return out
 }

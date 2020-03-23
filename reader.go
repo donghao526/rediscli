@@ -44,13 +44,10 @@ func processItem(r *RedisReader) int {
 		switch p {
 		case '-':
 			cur.obj_type = TYPE_ERROR
-			break
 		case '+':
 			cur.obj_type = TYPE_STRING
-			break
 		case ':':
 			cur.obj_type = TYPE_INTEGER
-			break
 		default:
 		}
 	} else {
@@ -75,18 +72,15 @@ func processLineItem(r *RedisReader) int {
 		return REDIS_ERR
 	}
 
-	var obj RedisObject
 	if task.obj_type == TYPE_STRING {
-		obj = RedisObject{
-			obj_type:  TYPE_STRING,
-			int_value: 0,
-			str_value: strLine,
-		}
-		task.obj = &obj
+		task.obj = CreateStringObject(strLine)
+	}
+	if task.obj_type == TYPE_ERROR {
+		task.obj = CreateErrorObject(strLine)
 	}
 
 	if r.ridx == 0 {
-		r.reply = &obj
+		r.reply = task.obj
 	}
 	moveToNextTask(r)
 	return REDIS_OK

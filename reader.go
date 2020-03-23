@@ -140,9 +140,11 @@ func readChar(r *RedisReader) (byte, int) {
 	return '0', REDIS_ERR
 }
 
-func RedisGetReply(ctx *RedisContext, reply *RedisObject) int {
+func RedisGetReply(ctx *RedisContext) (int, *RedisObject) {
+	var reply *RedisObject
+	reply = nil
 	if REDIS_OK != ReadRedisReply(ctx) {
-		return REDIS_ERR
+		return REDIS_ERR, reply
 	}
 
 	r := ctx.replyReader
@@ -161,7 +163,7 @@ func RedisGetReply(ctx *RedisContext, reply *RedisObject) int {
 	if r.ridx == -1 {
 		reply = r.reply
 	}
-	return REDIS_OK
+	return REDIS_OK, reply
 }
 
 /*
@@ -170,7 +172,6 @@ func RedisGetReply(ctx *RedisContext, reply *RedisObject) int {
 func ReadRedisReply(ctx *RedisContext) int {
 	var newbuf [1024 * 16]byte
 	var nread, _ = ctx.reader.Read(newbuf[:])
-	fmt.Println(string(newbuf[:]))
 	var newReader RedisReader
 
 	if nread > 0 {

@@ -26,8 +26,7 @@ func main() {
 				} else {
 					//rediscli.ReadReply(ctx)
 //					err := rediscli.ReadRedisReply(ctx)
-					var reply *rediscli.RedisObject
-					rediscli.RedisGetReply(ctx, reply)
+					_,reply := rediscli.RedisGetReply(ctx)
 					out := rediscli.ParseReply(reply)
 					fmt.Println(out)
 					//if err != rediscli.REDIS_OK {

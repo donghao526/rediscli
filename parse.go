@@ -31,6 +31,7 @@ func buildRespString(arrKeyWords []string) string {
 	return strResp
 }
 
+// parse reply
 func ParseReply(reply *RedisObject) string {
 	out := ""
 	switch reply.obj_type {

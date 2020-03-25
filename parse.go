@@ -45,6 +45,19 @@ func ParseReply(reply *RedisObject) string {
 		out += fmt.Sprintf("(integer) %d", reply.int_value)
 	case TYPE_NIL:
 		out += fmt.Sprintf("(integer) %s", reply.str_value)
+	case TYPE_ARRAY:
+		out = parseArray(reply)
 	}
+	return out
+}
+
+func parseArray(reply *RedisObject) string {
+	out := ""
+	i := 0
+	for i < reply.size - 1 {
+		out += fmt.Sprintf("%d) %s\n", i + 1, ParseReply(reply.member[i]))
+		i++
+	}
+	out += fmt.Sprintf("%d) %s", i + 1, ParseReply(reply.member[i]))
 	return out
 }

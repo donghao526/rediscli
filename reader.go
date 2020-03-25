@@ -25,6 +25,8 @@ type RedisObject struct {
 	obj_type  int
 	int_value int
 	str_value string
+	size int
+	member []*RedisObject
 }
 
 /*
@@ -44,6 +46,8 @@ func processItem(r *RedisReader) int {
 			cur.obj_type = TYPE_INTEGER
 		case '$':
 			cur.obj_type = TYPE_BULK
+		case '*':
+			cur.obj_type = TYPE_ARRAY
 		default:
 		}
 	} else {
@@ -59,10 +63,39 @@ func processItem(r *RedisReader) int {
 		fallthrough
 	case TYPE_BULK:
 		processLineItem(r)
+	case TYPE_ARRAY:
+		processAggregate(r)
 	}
 	return REDIS_OK
 }
 
+//
+func processAggregate(r *RedisReader) int {
+	task := &r.rstack[r.ridx]
+
+	size := readLen(r)
+	task.elements = size
+	r.cur_pos += 2
+	root := r.ridx == 0
+
+	if task.obj_type == TYPE_ARRAY {
+		CreateArrayObject(task, size)
+	}
+
+	if size > 0 {
+		r.ridx++
+		r.rstack[r.ridx].elements = - 1
+		r.rstack[r.ridx].idx = 0
+		r.rstack[r.ridx].parent = task
+	}
+
+	if root {
+		r.reply = task.obj
+	}
+	return REDIS_OK
+}
+
+// process line item
 func processLineItem(r *RedisReader) int {
 	task := &r.rstack[r.ridx]
 
@@ -72,21 +105,21 @@ func processLineItem(r *RedisReader) int {
 			return REDIS_ERR
 		}
 		if task.obj_type == TYPE_STRING {
-			task.obj = CreateStringObject(strLine)
+			CreateStringObject(task, strLine)
 		}
 		if task.obj_type == TYPE_ERROR {
-			task.obj = CreateErrorObject(strLine)
+			CreateErrorObject(task, strLine)
 		}
 	} else if task.obj_type == TYPE_BULK || task.obj_type == TYPE_INTEGER{
 		strLen := readLen(r)
 		if strLen == -1 {
-			task.obj = CreateNilObject()
+			CreateNilObject(task)
 		} else if task.obj_type == TYPE_BULK {
 			r.cur_pos += 2
 			bulk := readBytes(r, strLen)
-			task.obj = CreateBulkObject(string(bulk[:]))
+			CreateBulkObject(task, string(bulk[:]))
 		} else if task.obj_type == TYPE_INTEGER {
-			task.obj = CreateIntegerObject(strLen)
+			CreateIntegerObject(task, strLen)
 		}
 		r.cur_pos += 2
 	}
@@ -99,9 +132,25 @@ func processLineItem(r *RedisReader) int {
 }
 
 func moveToNextTask(r *RedisReader) int {
-	if r.ridx == 0 {
-		r.ridx = -1
-		return REDIS_OK
+	for r.ridx >=0 {
+		if r.ridx == 0 {
+			r.ridx = -1
+			return REDIS_OK
+		}
+		cur := &r.rstack[r.ridx]
+		prv := &r.rstack[r.ridx - 1]
+		if prv.obj_type != TYPE_ARRAY {
+			return REDIS_ERR
+		}
+
+		if cur.idx == prv.elements - 1 {
+			r.ridx--
+		} else {
+			cur.idx++
+			cur.obj_type = -1
+			cur.elements = -1
+			return REDIS_OK
+		}
 	}
 	return REDIS_OK
 }

@@ -1,11 +1,5 @@
 package rediscli
 
-import (
-	"fmt"
-	"strconv"
-	"strings"
-)
-
 type RedisReader struct {
 	err     int    /* Error flags, 0 when there is no error */
 	errstr  string /* String representation of error when applicable */
@@ -85,7 +79,9 @@ func processLineItem(r *RedisReader) int {
 		}
 	} else if task.obj_type == TYPE_BULK || task.obj_type == TYPE_INTEGER{
 		strLen := readLen(r)
-		if task.obj_type == TYPE_BULK {
+		if strLen == -1 {
+			task.obj = CreateNilObject()
+		} else if task.obj_type == TYPE_BULK {
 			r.cur_pos += 2
 			bulk := readBytes(r, strLen)
 			task.obj = CreateBulkObject(string(bulk[:]))
@@ -124,12 +120,17 @@ func readBytes(r *RedisReader, bytes int) []byte {
 func readLen(r *RedisReader) int {
 	pos := r.cur_pos
 	res := 0
+	flag := 1
 	for pos < r.len {
 		if r.buf[pos] > 0x30 && r.buf[pos] <= 0x39 {
 			res = res * 10 + (int)(r.buf[pos] - 0x30)
 			pos = pos + 1
+		} else if r.buf[pos] == 45 {
+			flag = -1
+			pos = pos + 1
 		} else {
 			r.cur_pos += pos - r.cur_pos
+			res = res * flag
 			return res
 		}
 	}
@@ -171,6 +172,7 @@ func readChar(r *RedisReader) (byte, int) {
 	return '0', REDIS_ERR
 }
 
+// get redis reply
 func RedisGetReply(ctx *RedisContext) (int, *RedisObject) {
 	var reply *RedisObject
 	reply = nil
@@ -227,46 +229,4 @@ func ReadLine(ctx *RedisContext) string {
 		return ""
 	}
 	return res
-}
-
-/*
- * process the bulk string
- */
-func ProcessBulkString(ctx *RedisContext, line string) (string, error) {
-	intBulkLen := parseLen(line)
-	if intBulkLen > 0 {
-		var strNewLine = ReadLine(ctx)
-		intCrlfPos := strings.Index(strNewLine, "\r\n")
-		return fmt.Sprintf("\"%s\"", strNewLine[:intCrlfPos]), nil
-	} else if intBulkLen == 0 {
-		return "", nil
-	} else {
-		return "nil", nil
-	}
-}
-
-/*
- * get the length of the bulk string
- */
-func parseLen(line string) int {
-	strArray := strings.Split(line, "\r\n")
-	intLen, _ := strconv.Atoi(strArray[0])
-	return intLen
-}
-
-/*
- * check the prefix is valid
- */
-func isValidPrefix(prefix byte) bool {
-	switch prefix {
-	case '-':
-	case '$':
-	case '*':
-	case '+':
-	case ':':
-		return true
-	default:
-		return false
-	}
-	return false
 }

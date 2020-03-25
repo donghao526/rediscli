@@ -24,9 +24,18 @@ func CreateBulkObject(bulk string) *RedisObject{
 	return strObj
 }
 
+// create an integer object
 func CreateIntegerObject(value int) *RedisObject {
 	strObj := new(RedisObject)
 	strObj.int_value = value
 	strObj.obj_type = TYPE_INTEGER
+	return strObj
+}
+
+//  create a nil object
+func CreateNilObject() *RedisObject {
+	strObj := new(RedisObject)
+	strObj.str_value = "nil"
+	strObj.obj_type = TYPE_NIL
 	return strObj
 }

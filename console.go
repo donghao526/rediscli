@@ -33,7 +33,3 @@ func GetUserInputCmd(ctx *RedisContext) string {
         return command
     }
 }
-
-func PrintReply(reply string) {
-    fmt.Println(reply)
-}

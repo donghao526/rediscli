@@ -69,12 +69,16 @@ func processItem(r *RedisReader) int {
 	return REDIS_OK
 }
 
-//
+// process aggregate types, such as map, set, hash
+// but map should double on elements, because of key and value
 func processAggregate(r *RedisReader) int {
 	task := &r.rstack[r.ridx]
 
+	// get the size of the aggregate object
 	size := readLen(r)
 	task.elements = size
+
+	// step over "\r\"
 	r.cur_pos += 2
 	root := r.ridx == 0
 
@@ -131,6 +135,11 @@ func processLineItem(r *RedisReader) int {
 	return REDIS_OK
 }
 
+/**
+ * @brief move to next protocol parse task
+ * @param RedisReader
+ * @return Error Code
+ */
 func moveToNextTask(r *RedisReader) int {
 	for r.ridx >=0 {
 		if r.ridx == 0 {

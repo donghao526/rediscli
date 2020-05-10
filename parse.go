@@ -19,16 +19,16 @@ func getKeyWordsOfCmd(command string) []string {
 
 // build the resp protocol string for the command
 func buildRespString(arrKeyWords []string) string {
-	var intCount = len(arrKeyWords)
-	var strResp = ""
-	strResp += fmt.Sprintf("*%d\r\n", intCount)
+	argc := len(arrKeyWords)
+	var respStr = ""
+	respStr += fmt.Sprintf("*%d\r\n", argc)
 
 	for _, value := range arrKeyWords {
 		if value != "" {
-			strResp += fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)
+			respStr += fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)
 		}
 	}
-	return strResp
+	return respStr
 }
 
 // parse reply

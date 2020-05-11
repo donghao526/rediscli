@@ -54,10 +54,13 @@ func ParseReply(reply *RedisObject) string {
 func parseArray(reply *RedisObject) string {
 	out := ""
 	i := 0
-	for i < reply.size - 1 {
-		out += fmt.Sprintf("%d) %s\n", i + 1, ParseReply(reply.member[i]))
+	format := "%d) %s\n"
+	for i < reply.size {
+		if i == reply.size - 1 {
+			format = "%d) %s"
+		}
+		out += fmt.Sprintf(format, i + 1, ParseReply(reply.member[i]))
 		i++
 	}
-	out += fmt.Sprintf("%d) %s", i + 1, ParseReply(reply.member[i]))
 	return out
 }
